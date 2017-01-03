@@ -1,0 +1,36 @@
+{
+  "name": "surch",
+  "version": "0.0.0",
+  "license": "MIT",
+  "description": "Create and query searchable document indices.",
+  "keywords": [
+    "search",
+    "index",
+    "query",
+    "document",
+    "find",
+    "match"
+  ],
+  "author": "Phil Booth <pmbooth@gmail.com> (https://philbooth.me/)",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "mocha --es_staging --ui tdd test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/philbooth/surch.git"
+  },
+  "homepage": "https://github.com/philbooth/surch#readme",
+  "bugs": {
+    "url": "https://github.com/philbooth/surch/issues"
+  },
+  "dependencies": {
+    "check-types": "^7.0.1"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "eslint": "^3.12.2",
+    "mocha": "^3.2.0"
+  }
+}
