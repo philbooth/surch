@@ -33,13 +33,17 @@ module.exports = {
    *   @param {String} [options.minLength]
    *   The minimum queryable substring length. Default is 3.
    *
+   *   @param {Boolean} [options.caseSensitive]
+   *   Indicates whether querying should be case sensitive. Default is false.
+   *
    * @returns {Index}
    */
-  create (targetKey, { idKey = '_id', minLength = 3 } = {}) {
+  create (targetKey, { idKey = '_id', minLength = 3, caseSensitive = false } = {}) {
     assert.nonEmptyString(targetKey, 'Invalid argument, "targetKey".')
     assert.nonEmptyString(idKey, 'Invalid option, "idKey".')
     assert.integer(minLength, 'Invalid option, "minLength".')
     assert(minLength > 0, 'Invalid option, "minLength".')
+    assert.boolean(caseSensitive, 'Invalid option, "caseSensitive".')
 
     const FULL_STRINGS = new Map()
     const N_GRAMS = {}
@@ -71,7 +75,7 @@ module.exports = {
         FULL_STRINGS.set(documentId, value)
 
         const items = []
-        split(value, minLength, 1, (character, index, position) => {
+        split(value, 1, (character, index, position) => {
           items[index] = {
             substring: character,
             index,
@@ -113,7 +117,7 @@ module.exports = {
         assert(query.length >= minLength, 'Invalid argument length, "query".')
 
         const subqueries = []
-        split(query, minLength, minLength, (character, index) => {
+        split(query, minLength, (character, index) => {
           subqueries[index] = character
         }, (character, index) => {
           subqueries[index] += character
@@ -167,44 +171,52 @@ module.exports = {
           })
       }
     }
-  }
-}
 
-function split (string, splitLength, outerIncrement, outerAssign, innerAssign) {
-  const stringLength = string.length
+    function split (string, outerIncrement, outerAssign, innerAssign) {
+      const stringLength = string.length
 
-  let i = 0, outerSkipCount = 0
+      let i = 0, outerSkipCount = 0
 
-  while (i + outerSkipCount < stringLength) {
-    const index = i / outerIncrement
-    const position = i + outerSkipCount
-    let character = string[position]
+      while (i + outerSkipCount < stringLength) {
+        const index = i / outerIncrement
+        const position = i + outerSkipCount
+        let character = normalise(string[position])
 
-    if (INSIGNIFICANT_CHARACTERS.has(character)) {
-      ++outerSkipCount
-      continue
+        if (INSIGNIFICANT_CHARACTERS.has(character)) {
+          ++outerSkipCount
+          continue
+        }
+
+        outerAssign(character, index, position)
+
+        let j = 1, innerSkipCount = 0
+        while (j < minLength && position + j + innerSkipCount < stringLength) {
+          character = normalise(string[position + j + innerSkipCount])
+
+          if (INSIGNIFICANT_CHARACTERS.has(character)) {
+            ++innerSkipCount
+            if (outerIncrement > 1) {
+              ++outerSkipCount
+            }
+            continue
+          }
+
+          innerAssign(character, index)
+
+          ++j
+        }
+
+        i += outerIncrement
+      }
     }
 
-    outerAssign(character, index, position)
-
-    let j = 1, innerSkipCount = 0
-    while (j < splitLength && position + j + innerSkipCount < stringLength) {
-      character = string[position + j + innerSkipCount]
-
-      if (INSIGNIFICANT_CHARACTERS.has(character)) {
-        ++innerSkipCount
-        if (outerIncrement > 1) {
-          ++outerSkipCount
-        }
-        continue
+    function normalise (string) {
+      if (caseSensitive) {
+        return string
       }
 
-      innerAssign(character, index)
-
-      ++j
+      return string.toLowerCase()
     }
-
-    i += outerIncrement
   }
 }
 
