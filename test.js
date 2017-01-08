@@ -84,6 +84,10 @@ suite('create with default arguments:', () => {
     assert.doesNotThrow(() => index.addDocument({ _id: 0, foo: 'ba' }))
   )
 
+  test('addDocument does not throw with extra value', () =>
+    assert.doesNotThrow(() => index.addDocument({ _id: 0, foo: 'bar', baz: 'qux' }))
+  )
+
   test('search throws with invalid query', () =>
     assert.throws(() => index.search({}))
   )
@@ -98,17 +102,21 @@ suite('create with default arguments:', () => {
 
   suite('addDocument with minimum length property:', () => {
     setup(() =>
-      index.addDocument({ _id: 0, foo: 'bar' })
+      index.addDocument({ _id: 0, foo: 'bar', baz: 'qux' })
     )
 
     test('addDocument throws with duplicate id', () =>
       assert.throws(() => index.addDocument({ _id: 0, foo: 'bar' }))
     )
 
-    test('search returns result array with 1 match', () =>
+    test('search with 1 match returns correct result', () =>
       assert.deepEqual(index.search('bar'), [
         { id: 0, match: 'bar', indices: [ 0 ], score: 100 }
       ])
+    )
+
+    test('search for wrong property returns empty result', () =>
+      assert.deepEqual(index.search('qux'), [])
     )
 
     suite('addDocument with overlapping length property:', () => {
@@ -116,20 +124,20 @@ suite('create with default arguments:', () => {
         index.addDocument({ _id: 1, foo: 'barb' })
       )
 
-      test('search returns result array with 2 matches', () =>
+      test('search with 2 matches returns correct result', () =>
         assert.deepEqual(index.search('bar'), [
           { id: 0, match: 'bar', indices: [ 0 ], score: 100 },
           { id: 1, match: 'barb', indices: [ 0 ], score: 75 }
         ])
       )
 
-      test('search returns result array with 1 match', () =>
+      test('search with 1 match returns correct result', () =>
         assert.deepEqual(index.search('barb'), [
           { id: 1, match: 'barb', indices: [ 0 ], score: 100 }
         ])
       )
 
-      test('search returns result array with 1 match not at start of string', () =>
+      test('search with 1 match not at start of string returns correct result', () =>
         assert.deepEqual(index.search('arb'), [
           { id: 1, match: 'barb', indices: [ 1 ], score: 75 }
         ])
@@ -171,13 +179,13 @@ suite('create with default arguments:', () => {
 
     test('search with punctuation match returns correct result', () =>
       assert.deepEqual(index.search('Queen\'s Head'), [
-        { id: 1, match: 'The Queen\'s Head', indices: [ 4 ], score: 75 },
+        { id: 1, match: 'The Queen\'s Head', indices: [ 4 ], score: 75 }
       ])
     )
 
     test('search with punctuation difference returns correct result', () =>
       assert.deepEqual(index.search('QueensHead'), [
-        { id: 1, match: 'The Queen\'s Head', indices: [ 4 ], score: 63 },
+        { id: 1, match: 'The Queen\'s Head', indices: [ 4 ], score: 63 }
       ])
     )
 
@@ -199,10 +207,57 @@ suite('create with default arguments:', () => {
 
     test('search with one case returns indices and score for both cases', () =>
       assert.deepEqual(index.search('the'), [
-        { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 0, 31 ], score: 14 },
+        { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 0, 31 ], score: 14 }
       ])
     )
+
+    suite('addDocument with subset of the same string:', () => {
+      setup(() =>
+        index.addDocument({ _id: 1, foo: 'The quick brown fox jumps over the dog.' })
+      )
+
+      test('search with common substring returns results in score order', () =>
+        assert.deepEqual(index.search('the'), [
+          { id: 1, match: 'The quick brown fox jumps over the dog.', indices: [ 0, 31 ], score: 16 },
+          { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 0, 31 ], score: 14 }
+        ])
+      )
+    })
   })
+})
+
+suite('create with different idKey:', () => {
+  let index
+
+  setup(() => {
+    index = surch.create('foo', { idKey: 'bar' })
+    index.addDocument({ bar: 'baz', foo: 'The quick brown fox jumps over the lazy dog.' })
+  })
+
+  test('search with 1 match returns correct result', () =>
+    assert.deepEqual(index.search('the'), [
+      { id: 'baz', match: 'The quick brown fox jumps over the lazy dog.', indices: [ 0, 31 ], score: 14 }
+    ])
+  )
+})
+
+suite('create with minLength=4:', () => {
+  let index
+
+  setup(() => {
+    index = surch.create('foo', { minLength: 4 })
+    index.addDocument({ _id: 0, foo: 'The quick brown fox jumps over the lazy dog.' })
+  })
+
+  test('search throws with short query', () =>
+    assert.throws(() => index.search('the'))
+  )
+
+  test('search with 1 match returns correct result', () =>
+    assert.deepEqual(index.search('the l'), [
+      { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 31 ], score: 11 }
+    ])
+  )
 })
 
 suite('create with caseSensitive=true:', () => {
