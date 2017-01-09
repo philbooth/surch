@@ -6,7 +6,6 @@ const INSIGNIFICANT_CHARACTERS = [
   { from: 0, to: 47 },
   { from: 58, to: 64 },
   { from: 91, to: 96 },
-  { from: 91, to: 96 },
   { from: 123, to: 191 },
   { from: 215, to: 215 },
   { from: 247, to: 247 }
