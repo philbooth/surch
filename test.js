@@ -1,4 +1,5 @@
-/* eslint-disable no-shadow */
+/* eslint-disable no-shadow, max-nested-callbacks */
+/* eslint-env mocha */
 
 'use strict'
 
@@ -120,28 +121,28 @@ suite('create with default arguments:', () => {
 
   test('update throws with invalid property', () =>
     assert.throws(() => {
-      assert.doesNotThrow(() => index.add({ _id: 42, foo: 'bar' }))
+      index.add({ _id: 42, foo: 'bar' })
       index.update({ _id: 42, foo: {} })
     })
   )
 
   test('update does not throw with missing value', () =>
     assert.doesNotThrow(() => {
-      assert.doesNotThrow(() => index.add({ _id: 42, foo: 'bar' }))
+      index.add({ _id: 42, foo: 'bar' })
       index.update({ _id: 42 })
     })
   )
 
   test('update does not throw with short value', () =>
     assert.doesNotThrow(() => {
-      assert.doesNotThrow(() => index.add({ _id: 42, foo: 'bar' }))
+      index.add({ _id: 42, foo: 'bar' })
       index.update({ _id: 42, foo: 'ba' })
     })
   )
 
   test('update does not throw with extra value', () =>
     assert.doesNotThrow(() => {
-      assert.doesNotThrow(() => index.add({ _id: 42, foo: 'bar' }))
+      index.add({ _id: 42, foo: 'bar' })
       index.update({ _id: 42, foo: 'bar', baz: 'qux' })
     })
   )
@@ -283,9 +284,9 @@ suite('create with default arguments:', () => {
       ])
     )
 
-  test('search with missing whitespace returns empty result', () =>
-    assert.deepEqual(index.search('QueensHead'), [])
-  )
+    test('search with missing whitespace returns empty result', () =>
+      assert.deepEqual(index.search('QueensHead'), [])
+    )
   })
 
   suite('add with same word in different cases:', () => {
