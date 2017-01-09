@@ -17,6 +17,8 @@ const INSIGNIFICANT_CHARACTERS = [
   return chars
 }, new Set())
 
+const WHITESPACE = new Set([ ' ', '\u00a0', '\t', '\v', '\f', '\r', '\n' ])
+
 module.exports = {
   /**
    * Create a searchable document index.
@@ -34,16 +36,20 @@ module.exports = {
    *   The minimum queryable substring length. Default is 3.
    *
    *   @param {Boolean} [options.caseSensitive]
-   *   Indicates whether querying should be case sensitive. Default is false.
+   *   Indicates whether queries should be case sensitive. Default is false.
+   *
+   *   @param {Boolean} [options.strict]
+   *   Indicates whether queries should be strictly matched. Default is false.
    *
    * @returns {Index}
    */
-  create (targetKey, { idKey = '_id', minLength = 3, caseSensitive = false } = {}) {
+  create (targetKey, { idKey = '_id', minLength = 3, caseSensitive = false, strict = false } = {}) {
     assert.nonEmptyString(targetKey, 'Invalid argument, "targetKey".')
     assert.nonEmptyString(idKey, 'Invalid option, "idKey".')
     assert.integer(minLength, 'Invalid option, "minLength".')
     assert(minLength > 0, 'Invalid option, "minLength".')
     assert.boolean(caseSensitive, 'Invalid option, "caseSensitive".')
+    assert.boolean(strict, 'Invalid option, "strict".')
 
     const FULL_STRINGS = new Map()
     const N_GRAMS = {}
@@ -74,22 +80,11 @@ module.exports = {
 
         FULL_STRINGS.set(documentId, value)
 
-        const items = []
-        split(value, 1, (character, index, position) => {
-          items[index] = {
-            substring: character,
-            index,
-            position
-          }
-        }, (character, index) => {
-          items[index].substring += character
-        })
-
-        items.forEach(item => {
+        split(value).forEach(item => {
           const substring = item.substring
           const ngram = N_GRAMS[substring]
           const index = {
-            documentId: documentId,
+            documentId,
             position: item.position,
             index: item.index
           }
@@ -116,18 +111,11 @@ module.exports = {
         assert.string(query, 'Invalid argument, "query".')
         assert(query.length >= minLength, 'Invalid argument length, "query".')
 
-        const subqueries = []
-        split(query, minLength, (character, index) => {
-          subqueries[index] = character
-        }, (character, index) => {
-          subqueries[index] += character
-        })
-
         const dedupedResults = new Map()
 
-        return subqueries
+        return split(query)
           .reduce((results, subquery, subqueryIndex) => {
-            const matches = N_GRAMS[subquery] || []
+            const matches = N_GRAMS[subquery.substring] || []
 
             if (subqueryIndex === 0) {
               return matches
@@ -136,13 +124,12 @@ module.exports = {
             return results
               .filter(result => {
                 return matches.some(match => {
-                  return match.documentId === result.documentId &&
-                    match.index === result.index + (subqueryIndex * minLength)
+                  return match.documentId === result.documentId && match.index === result.index + subqueryIndex
                 })
               })
           }, [])
           .reduce((deduped, result) => {
-            const { documentId, index, position } = result
+            const { documentId, position } = result
             const match = FULL_STRINGS.get(documentId)
             const score = Math.round(query.length / match.length * 100)
 
@@ -172,46 +159,52 @@ module.exports = {
       }
     }
 
-    function split (string, outerIncrement, outerAssign, innerAssign) {
+    function split (string, index = 0, skipCount = 0, substrings = []) {
       const stringLength = string.length
 
-      let i = 0, outerSkipCount = 0
+      if (index + skipCount > stringLength - minLength) {
+        return substrings
+      }
 
-      while (i + outerSkipCount < stringLength) {
-        const index = i / outerIncrement
-        const position = i + outerSkipCount
-        let character = normalise(string[position])
+      const position = index + skipCount
+      let character = normalise(string[position])
 
-        if (INSIGNIFICANT_CHARACTERS.has(character)) {
-          ++outerSkipCount
-          continue
-        }
+      if (INSIGNIFICANT_CHARACTERS.has(character)) {
+        return split(string, index, skipCount + 1, substrings)
+      }
 
-        outerAssign(character, index, position)
+      substrings[index] = {
+        substring: character,
+        index,
+        position
+      }
 
-        let j = 1, innerSkipCount = 0
-        while (j < minLength && position + j + innerSkipCount < stringLength) {
-          character = normalise(string[position + j + innerSkipCount])
+      let j = 1, substringSkipCount = 0
+      while (j < minLength) {
+        if (position + j + substringSkipCount < stringLength) {
+          character = normalise(string[position + j + substringSkipCount])
 
-          if (INSIGNIFICANT_CHARACTERS.has(character)) {
-            ++innerSkipCount
-            if (outerIncrement > 1) {
-              ++outerSkipCount
+          if (strict || ! WHITESPACE.has(character)) {
+            if (INSIGNIFICANT_CHARACTERS.has(character)) {
+              ++substringSkipCount
+              continue
             }
+
+            substrings[index].substring += character
+            ++j
             continue
           }
-
-          innerAssign(character, index)
-
-          ++j
         }
 
-        i += outerIncrement
+        substrings.pop()
+        return split(string, index, skipCount + 1, substrings)
       }
+
+      return split(string, index + 1, skipCount, substrings)
     }
 
     function normalise (string) {
-      if (caseSensitive) {
+      if (caseSensitive || ! string) {
         return string
       }
 

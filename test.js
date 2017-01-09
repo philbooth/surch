@@ -41,6 +41,10 @@ test('create throws with invalid caseSensitive', () =>
   assert.throws(() => surch.create('foo', { caseSensitive: 1 }))
 )
 
+test('create throws with invalid strict', () =>
+  assert.throws(() => surch.create('foo', { strict: 'true' }))
+)
+
 suite('create with default arguments:', () => {
   let index
 
@@ -184,13 +188,13 @@ suite('create with default arguments:', () => {
     )
 
     test('search with punctuation difference returns correct result', () =>
-      assert.deepEqual(index.search('QueensHead'), [
-        { id: 1, match: 'The Queen\'s Head', indices: [ 4 ], score: 63 }
+      assert.deepEqual(index.search('Queens Head'), [
+        { id: 1, match: 'The Queen\'s Head', indices: [ 4 ], score: 69 }
       ])
     )
 
     test('search with wrong order returns empty result', () =>
-      assert.deepEqual(index.search('HeaQueen\'s d'), [])
+      assert.deepEqual(index.search('en\'sQue Head'), [])
     )
 
     test('search with wrong case returns correct result', () =>
@@ -198,6 +202,10 @@ suite('create with default arguments:', () => {
         { id: 1, match: 'The Queen\'s Head', indices: [ 4 ], score: 75 }
       ])
     )
+
+  test('search with missing whitespace returns empty result', () =>
+    assert.deepEqual(index.search('QueensHead'), [])
+  )
   })
 
   suite('addDocument with same word in different cases:', () => {
@@ -245,7 +253,7 @@ suite('create with minLength=4:', () => {
   let index
 
   setup(() => {
-    index = surch.create('foo', { minLength: 4 })
+    index = surch.create('foo', { strict: true, minLength: 4 })
     index.addDocument({ _id: 0, foo: 'The quick brown fox jumps over the lazy dog.' })
   })
 
@@ -254,8 +262,8 @@ suite('create with minLength=4:', () => {
   )
 
   test('search with 1 match returns correct result', () =>
-    assert.deepEqual(index.search('the l'), [
-      { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 31 ], score: 11 }
+    assert.deepEqual(index.search('lazy'), [
+      { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 35 ], score: 9 }
     ])
   )
 })
@@ -275,6 +283,54 @@ suite('create with caseSensitive=true:', () => {
   test('search with one case returns indices and score for the correct case', () =>
     assert.deepEqual(index.search('the'), [
       { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 31 ], score: 7 }
+    ])
+  )
+})
+
+suite('create with strict=true:', () => {
+  let index
+
+  setup(() => {
+    index = surch.create('wibble', { strict: true })
+    index.addDocument({ _id: 0, wibble: 'The King & Queen' })
+    index.addDocument({ _id: 1, wibble: 'The Queen\'s Head' })
+    index.addDocument({ _id: 2, wibble: 'The King\'s Arms' })
+  })
+
+  test('search with punctuation match returns correct result', () =>
+    assert.deepEqual(index.search('g\'s A'), [
+      { id: 2, match: 'The King\'s Arms', indices: [ 7 ], score: 33 }
+    ])
+  )
+
+  test('search with punctuation difference returns correct result', () =>
+    assert.deepEqual(index.search('gsA'), [
+      { id: 2, match: 'The King\'s Arms', indices: [ 7 ], score: 20 }
+    ])
+  )
+
+  test('search with wrong case returns correct result', () =>
+    assert.deepEqual(index.search('nsh'), [
+      { id: 1, match: 'The Queen\'s Head', indices: [ 8 ], score: 19 }
+    ])
+  )
+
+  test('search with wrong order returns empty result', () =>
+    assert.deepEqual(index.search('HeaQueen\'s d'), [])
+  )
+})
+
+suite('create with strict=true, minLength=4:', () => {
+  let index
+
+  setup(() => {
+    index = surch.create('foo', { strict: true, minLength: 4 })
+    index.addDocument({ _id: 0, foo: 'The quick brown fox jumps over the lazy dog.' })
+  })
+
+  test('search with whitespace-separated match returns correct result', () =>
+    assert.deepEqual(index.search('the l'), [
+      { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 31 ], score: 11 }
     ])
   )
 })
