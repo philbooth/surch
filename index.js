@@ -58,6 +58,7 @@ module.exports = {
      * @typedef Index
      * @property {Function} add
      * @property {Function} delete
+     * @property {Function} update
      * @property {Function} search
      */
     return {
@@ -115,6 +116,17 @@ module.exports = {
             delete N_GRAMS[key]
           }
         })
+      },
+
+      /**
+       * Update a document in the index.
+       *
+       * @param {Object} document
+       * The document to be updated.
+       */
+      update (document) {
+        this.delete(document[idKey])
+        this.add(document)
       },
 
       /**

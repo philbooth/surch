@@ -52,8 +52,8 @@ suite('create with default arguments:', () => {
     index = surch.create('foo')
   )
 
-  test('index has three properties', () =>
-    assert.lengthOf(Object.keys(index), 3)
+  test('index has four properties', () =>
+    assert.lengthOf(Object.keys(index), 4)
   )
 
   test('index has add method', () =>
@@ -70,6 +70,14 @@ suite('create with default arguments:', () => {
 
   test('delete expects 1 argument', () =>
     assert.lengthOf(index.delete, 1)
+  )
+
+  test('index has update method', () =>
+    assert.isFunction(index.update)
+  )
+
+  test('update expects 1 argument', () =>
+    assert.lengthOf(index.update, 1)
   )
 
   test('index has search method', () =>
@@ -102,6 +110,40 @@ suite('create with default arguments:', () => {
 
   test('delete throws with invalid documentId', () =>
     assert.throws(() => index.delete(42))
+  )
+
+  test('update throws with invalid documentId', () =>
+    assert.throws(() => {
+      index.update({ _id: 42, foo: 'bar' })
+    })
+  )
+
+  test('update throws with invalid property', () =>
+    assert.throws(() => {
+      assert.doesNotThrow(() => index.add({ _id: 42, foo: 'bar' }))
+      index.update({ _id: 42, foo: {} })
+    })
+  )
+
+  test('update does not throw with missing value', () =>
+    assert.doesNotThrow(() => {
+      assert.doesNotThrow(() => index.add({ _id: 42, foo: 'bar' }))
+      index.update({ _id: 42 })
+    })
+  )
+
+  test('update does not throw with short value', () =>
+    assert.doesNotThrow(() => {
+      assert.doesNotThrow(() => index.add({ _id: 42, foo: 'bar' }))
+      index.update({ _id: 42, foo: 'ba' })
+    })
+  )
+
+  test('update does not throw with extra value', () =>
+    assert.doesNotThrow(() => {
+      assert.doesNotThrow(() => index.add({ _id: 42, foo: 'bar' }))
+      index.update({ _id: 42, foo: 'bar', baz: 'qux' })
+    })
   )
 
   test('search throws with invalid query', () =>
@@ -167,6 +209,22 @@ suite('create with default arguments:', () => {
 
       test('search with former match returns empty result', () =>
         assert.deepEqual(index.search('bar'), [])
+      )
+    })
+
+    suite('update:', () => {
+      setup(() =>
+        index.update({ _id: 0, foo: 'wibble' })
+      )
+
+      test('search with former match returns empty result', () =>
+        assert.deepEqual(index.search('bar'), [])
+      )
+
+      test('search with new match returns correct result', () =>
+        assert.deepEqual(index.search('ibb'), [
+          { id: 0, match: 'wibble', indices: [ 1 ], score: 50 }
+        ])
       )
     })
   })
