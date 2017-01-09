@@ -52,16 +52,24 @@ suite('create with default arguments:', () => {
     index = surch.create('foo')
   )
 
-  test('index has two properties', () =>
-    assert.lengthOf(Object.keys(index), 2)
+  test('index has three properties', () =>
+    assert.lengthOf(Object.keys(index), 3)
   )
 
-  test('index has addDocument method', () =>
-    assert.isFunction(index.addDocument)
+  test('index has add method', () =>
+    assert.isFunction(index.add)
   )
 
-  test('addDocument expects 1 argument', () =>
-    assert.lengthOf(index.addDocument, 1)
+  test('add expects 1 argument', () =>
+    assert.lengthOf(index.add, 1)
+  )
+
+  test('index has delete method', () =>
+    assert.isFunction(index.delete)
+  )
+
+  test('delete expects 1 argument', () =>
+    assert.lengthOf(index.delete, 1)
   )
 
   test('index has search method', () =>
@@ -72,24 +80,28 @@ suite('create with default arguments:', () => {
     assert.lengthOf(index.search, 1)
   )
 
-  test('addDocument throws with invalid property', () =>
-    assert.throws(() => index.addDocument({ _id: 0, foo: {} }))
+  test('add throws with invalid property', () =>
+    assert.throws(() => index.add({ _id: 0, foo: {} }))
   )
 
-  test('addDocument throws with missing id', () =>
-    assert.throws(() => index.addDocument({ _id: null, foo: 'bar' }))
+  test('add throws with missing id', () =>
+    assert.throws(() => index.add({ _id: null, foo: 'bar' }))
   )
 
-  test('addDocument does not throw with missing value', () =>
-    assert.doesNotThrow(() => index.addDocument({ _id: 0 }))
+  test('add does not throw with missing value', () =>
+    assert.doesNotThrow(() => index.add({ _id: 0 }))
   )
 
-  test('addDocument does not throw with short value', () =>
-    assert.doesNotThrow(() => index.addDocument({ _id: 0, foo: 'ba' }))
+  test('add does not throw with short value', () =>
+    assert.doesNotThrow(() => index.add({ _id: 0, foo: 'ba' }))
   )
 
-  test('addDocument does not throw with extra value', () =>
-    assert.doesNotThrow(() => index.addDocument({ _id: 0, foo: 'bar', baz: 'qux' }))
+  test('add does not throw with extra value', () =>
+    assert.doesNotThrow(() => index.add({ _id: 0, foo: 'bar', baz: 'qux' }))
+  )
+
+  test('delete throws with invalid documentId', () =>
+    assert.throws(() => index.delete(42))
   )
 
   test('search throws with invalid query', () =>
@@ -104,13 +116,13 @@ suite('create with default arguments:', () => {
     assert.deepEqual(index.search('bar'), [])
   )
 
-  suite('addDocument with minimum length property:', () => {
+  suite('add with minimum length property:', () => {
     setup(() =>
-      index.addDocument({ _id: 0, foo: 'bar', baz: 'qux' })
+      index.add({ _id: 0, foo: 'bar', baz: 'qux' })
     )
 
-    test('addDocument throws with duplicate id', () =>
-      assert.throws(() => index.addDocument({ _id: 0, foo: 'bar' }))
+    test('add throws with duplicate id', () =>
+      assert.throws(() => index.add({ _id: 0, foo: 'bar' }))
     )
 
     test('search with 1 match returns correct result', () =>
@@ -123,9 +135,9 @@ suite('create with default arguments:', () => {
       assert.deepEqual(index.search('qux'), [])
     )
 
-    suite('addDocument with overlapping length property:', () => {
+    suite('add with overlapping length property:', () => {
       setup(() =>
-        index.addDocument({ _id: 1, foo: 'barb' })
+        index.add({ _id: 1, foo: 'barb' })
       )
 
       test('search with 2 matches returns correct result', () =>
@@ -147,11 +159,21 @@ suite('create with default arguments:', () => {
         ])
       )
     })
+
+    suite('delete:', () => {
+      setup(() =>
+        index.delete(0)
+      )
+
+      test('search with former match returns empty result', () =>
+        assert.deepEqual(index.search('bar'), [])
+      )
+    })
   })
 
-  suite('addDocument with repetitive text:', () => {
+  suite('add with repetitive text:', () => {
     setup(() =>
-      index.addDocument({ _id: 0, foo: 'xfooxfooxfoo' })
+      index.add({ _id: 0, foo: 'xfooxfooxfoo' })
     )
 
     test('search returns result array with 1 match', () =>
@@ -160,9 +182,9 @@ suite('create with default arguments:', () => {
       ])
     )
 
-    suite('addDocument with similar repetitive text:', () => {
+    suite('add with similar repetitive text:', () => {
       setup(() =>
-        index.addDocument({ _id: 1, foo: 'foodfoodfood' })
+        index.add({ _id: 1, foo: 'foodfoodfood' })
       )
 
       test('search returns results in index order if scores are equal', () =>
@@ -174,11 +196,11 @@ suite('create with default arguments:', () => {
     })
   })
 
-  suite('addDocument with whitespace and punctuation:', () => {
+  suite('add with whitespace and punctuation:', () => {
     setup(() => {
-      index.addDocument({ _id: 0, foo: 'The King & Queen' })
-      index.addDocument({ _id: 1, foo: 'The Queen\'s Head' })
-      index.addDocument({ _id: 2, foo: 'The King\'s Arms' })
+      index.add({ _id: 0, foo: 'The King & Queen' })
+      index.add({ _id: 1, foo: 'The Queen\'s Head' })
+      index.add({ _id: 2, foo: 'The King\'s Arms' })
     })
 
     test('search with punctuation match returns correct result', () =>
@@ -208,9 +230,9 @@ suite('create with default arguments:', () => {
   )
   })
 
-  suite('addDocument with same word in different cases:', () => {
+  suite('add with same word in different cases:', () => {
     setup(() =>
-      index.addDocument({ _id: 0, foo: 'The quick brown fox jumps over the lazy dog.' })
+      index.add({ _id: 0, foo: 'The quick brown fox jumps over the lazy dog.' })
     )
 
     test('search with one case returns indices and score for both cases', () =>
@@ -219,9 +241,9 @@ suite('create with default arguments:', () => {
       ])
     )
 
-    suite('addDocument with subset of the same string:', () => {
+    suite('add with subset of the same string:', () => {
       setup(() =>
-        index.addDocument({ _id: 1, foo: 'The quick brown fox jumps over the dog.' })
+        index.add({ _id: 1, foo: 'The quick brown fox jumps over the dog.' })
       )
 
       test('search with common substring returns results in score order', () =>
@@ -239,7 +261,7 @@ suite('create with different idKey:', () => {
 
   setup(() => {
     index = surch.create('foo', { idKey: 'bar' })
-    index.addDocument({ bar: 'baz', foo: 'The quick brown fox jumps over the lazy dog.' })
+    index.add({ bar: 'baz', foo: 'The quick brown fox jumps over the lazy dog.' })
   })
 
   test('search with 1 match returns correct result', () =>
@@ -254,7 +276,7 @@ suite('create with minLength=4:', () => {
 
   setup(() => {
     index = surch.create('foo', { strict: true, minLength: 4 })
-    index.addDocument({ _id: 0, foo: 'The quick brown fox jumps over the lazy dog.' })
+    index.add({ _id: 0, foo: 'The quick brown fox jumps over the lazy dog.' })
   })
 
   test('search throws with short query', () =>
@@ -273,7 +295,7 @@ suite('create with caseSensitive=true:', () => {
 
   setup(() => {
     index = surch.create('wibble', { caseSensitive: true })
-    index.addDocument({ _id: 0, wibble: 'The quick brown fox jumps over the lazy dog.' })
+    index.add({ _id: 0, wibble: 'The quick brown fox jumps over the lazy dog.' })
   })
 
   test('search with wrong case returns empty result', () =>
@@ -292,9 +314,9 @@ suite('create with strict=true:', () => {
 
   setup(() => {
     index = surch.create('wibble', { strict: true })
-    index.addDocument({ _id: 0, wibble: 'The King & Queen' })
-    index.addDocument({ _id: 1, wibble: 'The Queen\'s Head' })
-    index.addDocument({ _id: 2, wibble: 'The King\'s Arms' })
+    index.add({ _id: 0, wibble: 'The King & Queen' })
+    index.add({ _id: 1, wibble: 'The Queen\'s Head' })
+    index.add({ _id: 2, wibble: 'The King\'s Arms' })
   })
 
   test('search with punctuation match returns correct result', () =>
@@ -325,7 +347,7 @@ suite('create with strict=true, minLength=4:', () => {
 
   setup(() => {
     index = surch.create('foo', { strict: true, minLength: 4 })
-    index.addDocument({ _id: 0, foo: 'The quick brown fox jumps over the lazy dog.' })
+    index.add({ _id: 0, foo: 'The quick brown fox jumps over the lazy dog.' })
   })
 
   test('search with whitespace-separated match returns correct result', () =>

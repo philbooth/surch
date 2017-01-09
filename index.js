@@ -56,7 +56,8 @@ module.exports = {
 
     /**
      * @typedef Index
-     * @property {Function} addDocument
+     * @property {Function} add
+     * @property {Function} delete
      * @property {Function} search
      */
     return {
@@ -66,7 +67,7 @@ module.exports = {
        * @param {Object} document
        * The document to be added to the index.
        */
-      addDocument (document) {
+      add (document) {
         const value = document[targetKey]
         const documentId = document[idKey]
 
@@ -93,6 +94,25 @@ module.exports = {
             ngram.push(index)
           } else {
             N_GRAMS[substring] = [ index ]
+          }
+        })
+      },
+
+      /**
+       * Delete a document from the index.
+       *
+       * @param documentId
+       * Id of the document to be removed from the index.
+       */
+      delete (documentId) {
+        assert.string(FULL_STRINGS.get(documentId), 'Invalid document id.')
+
+        FULL_STRINGS.delete(documentId)
+
+        Object.entries(N_GRAMS).forEach(([ key, indices ]) => {
+          N_GRAMS[key] = indices.filter(index => index.documentId !== documentId)
+          if (N_GRAMS[key].length === 0) {
+            delete N_GRAMS[key]
           }
         })
       },
