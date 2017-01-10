@@ -51,7 +51,7 @@ module.exports = {
     assert.boolean(strict, 'Invalid option, "strict".')
 
     const FULL_STRINGS = new Map()
-    const N_GRAMS = {}
+    const N_GRAMS = new Map()
 
     /**
      * @typedef Index
@@ -83,7 +83,7 @@ module.exports = {
 
         split(value).forEach(item => {
           const substring = item.substring
-          const ngram = N_GRAMS[substring]
+          const ngram = N_GRAMS.get(substring)
           const index = {
             documentId,
             position: item.position,
@@ -93,7 +93,7 @@ module.exports = {
           if (ngram) {
             ngram.push(index)
           } else {
-            N_GRAMS[substring] = [ index ]
+            N_GRAMS.set(substring, [ index ])
           }
         })
       },
@@ -109,10 +109,12 @@ module.exports = {
 
         FULL_STRINGS.delete(documentId)
 
-        Object.entries(N_GRAMS).forEach(([ key, indices ]) => {
-          N_GRAMS[key] = indices.filter(index => index.documentId !== documentId)
-          if (N_GRAMS[key].length === 0) {
-            delete N_GRAMS[key]
+        N_GRAMS.forEach((indices, key) => {
+          indices = indices.filter(index => index.documentId !== documentId)
+          if (indices.length === 0) {
+            N_GRAMS.delete(key)
+          } else {
+            N_GRAMS.set(key, indices)
           }
         })
       },
@@ -134,8 +136,8 @@ module.exports = {
        * @param {String} query
        * The query string.
        *
-       * @returns {Array} ids
-       * Matching document ids. The most relevant documents will be at the
+       * @returns {Array} results
+       * Matching documents. The most relevant documents will be at the
        * beginning of the array and the least relevant will be at the end.
        */
       search (query) {
@@ -172,7 +174,7 @@ module.exports = {
         substring: character,
         index,
         position,
-        tokenStart: WHITESPACE.has(string[position - 1]) && ! strict
+        tokenStart: ! strict && WHITESPACE.has(string[position - 1])
       }
 
       let j = 1, substringSkipCount = 0
@@ -212,7 +214,7 @@ module.exports = {
 
       for (let i = 0; subqueries.length > 0; ++i) {
         const subquery = subqueries[0]
-        const matches = N_GRAMS[subquery.substring] || []
+        const matches = N_GRAMS.get(subquery.substring) || []
 
         if (i === 0) {
           if (documentId) {
