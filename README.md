@@ -60,16 +60,16 @@ This approach has two benefits:
   into the inverted index,
   so there is no need
   to iterate through
-  the characters in each string.
+  the characters in every string.
 
 To satisfy
-the most common (i.e. my) use-case,
+the most common use-case (i.e. mine),
 whitespace in each query
 is treated as a separator
 between subqueries.
-The query result
-is the intersection
-of all subquery results.
+Subquery results
+are then intersected by document id
+to produce the overall result.
 
 ## How do I install it?
 
@@ -152,26 +152,20 @@ that you'd like to match against:
 index.search('farm');
 // Returns [
 //   {
-//     id: 'ffox2',
-//     match: 'The owners of these farms had done well.',
-//     indices: [ 20 ],
-//     score: 10
+//     id: 'ffox2', indices: [ 20 ], score: 10,
+//     match: 'The owners of these farms had done well.'
 //   },
 //   {
-//     id: 'ffox1',
-//     match: 'Down in the valley there were three farms.',
-//     indices: [ 36 ],
-//     score: 10
+//     id: 'ffox1', indices: [ 36 ], score: 10,
+//     match: 'Down in the valley there were three farms.'
 //   }
 // ]
 
 index.search('valley farm');
 // Returns [
 //   {
-//     id: 'ffox1',
-//     match: 'Down in the valley there were three farms.',
-//     indices: [ 12, 36 ],
-//     score: 26
+//     id: 'ffox1', indices: [ 12, 36 ], score: 26,
+//     match: 'Down in the valley there were three farms.'
 //   }
 // ]
 ```
@@ -198,7 +192,7 @@ comes first.
 
 Call `delete(id)`,
 where `id` identifies the document
-that you want to delete:
+that you wish to delete:
 
 ```js
 index.delete('ffox2');
