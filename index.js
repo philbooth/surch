@@ -142,44 +142,8 @@ module.exports = {
         assert.string(query, 'Invalid argument, "query".')
         assert(query.length >= minLength, 'Invalid argument length, "query".')
 
-        const dedupedResults = new Map()
-
-        return split(query)
-          .reduce((results, subquery, subqueryIndex) => {
-            const matches = N_GRAMS[subquery.substring] || []
-
-            if (subqueryIndex === 0) {
-              return matches
-            }
-
-            return results
-              .filter(result => {
-                return matches.some(match => {
-                  return match.documentId === result.documentId && match.index === result.index + subqueryIndex
-                })
-              })
-          }, [])
-          .reduce((deduped, result) => {
-            const { documentId, position } = result
-            const match = FULL_STRINGS.get(documentId)
-            const score = Math.round(query.length / match.length * 100)
-
-            if (dedupedResults.has(documentId)) {
-              const canonicalResult = deduped[dedupedResults.get(documentId)]
-              canonicalResult.indices.push(position)
-              canonicalResult.score += score
-            } else {
-              dedupedResults.set(documentId, deduped.length)
-              deduped.push({
-                id: documentId,
-                indices: [ position ],
-                match,
-                score
-              })
-            }
-
-            return deduped
-          }, [])
+        return filter(split(query))
+          .reduce(dedupe.bind(new Map(), query), [])
           .sort((lhs, rhs) => {
             if (lhs.score === rhs.score) {
               return lhs.indices[0] - rhs.indices[0]
@@ -207,7 +171,8 @@ module.exports = {
       substrings[index] = {
         substring: character,
         index,
-        position
+        position,
+        tokenStart: WHITESPACE.has(string[position - 1]) && ! strict
       }
 
       let j = 1, substringSkipCount = 0
@@ -240,6 +205,69 @@ module.exports = {
       }
 
       return string.toLowerCase()
+    }
+
+    function filter (subqueries, documentId = null, results = []) {
+      let candidates
+
+      for (let i = 0; subqueries.length > 0; ++i) {
+        const subquery = subqueries[0]
+        const matches = N_GRAMS[subquery.substring] || []
+
+        if (i === 0) {
+          if (documentId) {
+            candidates = matches.filter(match => match.documentId === documentId)
+          } else {
+            candidates = matches
+          }
+
+          subqueries.shift()
+          continue
+        }
+
+        if (candidates.length === 0) {
+          return []
+        }
+
+        if (subquery.tokenStart) {
+          return filter(subqueries, candidates[0].documentId, results.concat(candidates))
+        }
+
+        candidates = candidates.filter(candidate => {
+          return matches.some(match => {
+            return match.documentId === candidate.documentId && match.index === candidate.index + i
+          })
+        })
+
+        subqueries.shift()
+      }
+
+      return results.concat(candidates)
+    }
+
+    function dedupe (query, deduped, result) {
+      const ids = this
+      const { documentId, position } = result
+      const match = FULL_STRINGS.get(documentId)
+      const score = Math.round(query.length / match.length * 100)
+
+      if (ids.has(documentId)) {
+        const canonicalResult = deduped[ids.get(documentId)]
+        canonicalResult.indices.push(position)
+        if (strict) {
+          canonicalResult.score += score
+        }
+      } else {
+        ids.set(documentId, deduped.length)
+        deduped.push({
+          id: documentId,
+          indices: [ position ],
+          match,
+          score
+        })
+      }
+
+      return deduped
     }
   }
 }

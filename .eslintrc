@@ -17,7 +17,7 @@ rules:
   comma-spacing: [ 2, { "before": false, "after": true } ]
   computed-property-spacing: [ 2, "never" ]
   consistent-return: 0
-  consistent-this: [ 2, "self" ]
+  consistent-this: 0
   constructor-super: 0
   curly: [ 2, "all" ]
   default-case: 0
@@ -94,7 +94,7 @@ rules:
   no-inline-comments: 2
   no-inner-declarations: [ 2, "both" ]
   no-invalid-regexp: 2
-  no-invalid-this: 1
+  no-invalid-this: 0
   no-irregular-whitespace: 2
   no-iterator: 2
   no-labels: 2

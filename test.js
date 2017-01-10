@@ -178,7 +178,7 @@ suite('create with default arguments:', () => {
       assert.deepEqual(index.search('qux'), [])
     )
 
-    suite('add with overlapping length property:', () => {
+    suite('add with similar property:', () => {
       setup(() =>
         index.add({ _id: 1, foo: 'barb' })
       )
@@ -237,7 +237,7 @@ suite('create with default arguments:', () => {
 
     test('search returns result array with 1 match', () =>
       assert.deepEqual(index.search('foo'), [
-        { id: 0, match: 'xfooxfooxfoo', indices: [ 1, 5, 9 ], score: 75 }
+        { id: 0, match: 'xfooxfooxfoo', indices: [ 1, 5, 9 ], score: 25 }
       ])
     )
 
@@ -248,8 +248,8 @@ suite('create with default arguments:', () => {
 
       test('search returns results in index order if scores are equal', () =>
         assert.deepEqual(index.search('foo'), [
-          { id: 1, match: 'foodfoodfood', indices: [ 0, 4, 8 ], score: 75 },
-          { id: 0, match: 'xfooxfooxfoo', indices: [ 1, 5, 9 ], score: 75 }
+          { id: 1, match: 'foodfoodfood', indices: [ 0, 4, 8 ], score: 25 },
+          { id: 0, match: 'xfooxfooxfoo', indices: [ 1, 5, 9 ], score: 25 }
         ])
       )
     })
@@ -264,13 +264,13 @@ suite('create with default arguments:', () => {
 
     test('search with punctuation match returns correct result', () =>
       assert.deepEqual(index.search('Queen\'s Head'), [
-        { id: 1, match: 'The Queen\'s Head', indices: [ 4 ], score: 75 }
+        { id: 1, match: 'The Queen\'s Head', indices: [ 4, 12 ], score: 75 }
       ])
     )
 
     test('search with punctuation difference returns correct result', () =>
       assert.deepEqual(index.search('Queens Head'), [
-        { id: 1, match: 'The Queen\'s Head', indices: [ 4 ], score: 69 }
+        { id: 1, match: 'The Queen\'s Head', indices: [ 4, 12 ], score: 69 }
       ])
     )
 
@@ -280,12 +280,18 @@ suite('create with default arguments:', () => {
 
     test('search with wrong case returns correct result', () =>
       assert.deepEqual(index.search('Queen\'s head'), [
-        { id: 1, match: 'The Queen\'s Head', indices: [ 4 ], score: 75 }
+        { id: 1, match: 'The Queen\'s Head', indices: [ 4, 12 ], score: 75 }
       ])
     )
 
     test('search with missing whitespace returns empty result', () =>
       assert.deepEqual(index.search('QueensHead'), [])
+    )
+
+    test('search with partial matches returns correct result', () =>
+      assert.deepEqual(index.search('en\'s ead'), [
+        { id: 1, match: 'The Queen\'s Head', indices: [ 7, 13 ], score: 50 }
+      ])
     )
   })
 
@@ -294,9 +300,9 @@ suite('create with default arguments:', () => {
       index.add({ _id: 0, foo: 'The quick brown fox jumps over the lazy dog.' })
     )
 
-    test('search with one case returns indices and score for both cases', () =>
+    test('search with one case returns indices for both cases', () =>
       assert.deepEqual(index.search('the'), [
-        { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 0, 31 ], score: 14 }
+        { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 0, 31 ], score: 7 }
       ])
     )
 
@@ -307,8 +313,8 @@ suite('create with default arguments:', () => {
 
       test('search with common substring returns results in score order', () =>
         assert.deepEqual(index.search('the'), [
-          { id: 1, match: 'The quick brown fox jumps over the dog.', indices: [ 0, 31 ], score: 16 },
-          { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 0, 31 ], score: 14 }
+          { id: 1, match: 'The quick brown fox jumps over the dog.', indices: [ 0, 31 ], score: 8 },
+          { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 0, 31 ], score: 7 }
         ])
       )
     })
@@ -325,7 +331,7 @@ suite('create with different idKey:', () => {
 
   test('search with 1 match returns correct result', () =>
     assert.deepEqual(index.search('the'), [
-      { id: 'baz', match: 'The quick brown fox jumps over the lazy dog.', indices: [ 0, 31 ], score: 14 }
+      { id: 'baz', match: 'The quick brown fox jumps over the lazy dog.', indices: [ 0, 31 ], score: 7 }
     ])
   )
 })
@@ -412,6 +418,30 @@ suite('create with strict=true, minLength=4:', () => {
   test('search with whitespace-separated match returns correct result', () =>
     assert.deepEqual(index.search('the l'), [
       { id: 0, match: 'The quick brown fox jumps over the lazy dog.', indices: [ 31 ], score: 11 }
+    ])
+  )
+})
+
+suite('readme:', () => {
+  let index
+
+  setup(() => {
+    index = surch.create('foo')
+    index.add({ _id: 'ffox1', foo: 'Down in the valley there were three farms.' })
+    index.add({ _id: 'ffox2', foo: 'The owners of these farms had done well.' })
+    index.add({ _id: 'ffox3', foo: 'They were rich men.' })
+  })
+
+  test('search with 2 matches returns correct results', () =>
+    assert.deepEqual(index.search('farm'), [
+      { id: 'ffox2', match: 'The owners of these farms had done well.', indices: [ 20 ], score: 10 },
+      { id: 'ffox1', match: 'Down in the valley there were three farms.', indices: [ 36 ], score: 10 }
+    ])
+  )
+
+  test('search with 1 match returns correct result', () =>
+    assert.deepEqual(index.search('valle far'), [
+      { id: 'ffox1', match: 'Down in the valley there were three farms.', indices: [ 12, 36 ], score: 21 }
     ])
   )
 })
