@@ -216,30 +216,25 @@ module.exports = {
         const subquery = subqueries[0]
         const matches = N_GRAMS.get(subquery.substring) || []
 
-        if (i === 0) {
-          if (documentId) {
-            candidates = matches.filter(match => match.documentId === documentId)
-          } else {
-            candidates = matches
+        if (i > 0) {
+          if (candidates.length === 0) {
+            return []
           }
 
-          subqueries.shift()
-          continue
-        }
+          if (subquery.tokenStart) {
+            return filter(subqueries, candidates[0].documentId, results.concat(candidates))
+          }
 
-        if (candidates.length === 0) {
-          return []
-        }
-
-        if (subquery.tokenStart) {
-          return filter(subqueries, candidates[0].documentId, results.concat(candidates))
-        }
-
-        candidates = candidates.filter(candidate => {
-          return matches.some(match => {
-            return match.documentId === candidate.documentId && match.index === candidate.index + i
+          candidates = candidates.filter(candidate => {
+            return matches.some(match => {
+              return match.documentId === candidate.documentId && match.index === candidate.index + i
+            })
           })
-        })
+        } else if (documentId) {
+          candidates = matches.filter(match => match.documentId === documentId)
+        } else {
+          candidates = matches
+        }
 
         subqueries.shift()
       }
