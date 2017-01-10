@@ -1,5 +1,12 @@
 # Change log
 
+## 0.0.1
+
+* feat: add readme
+* fix: repair broken fuzzy-matching
+* refactor: convert N_GRAMS to a Map instance
+* refactor: eliminate explicit loop continue
+
 ## 0.0.0
 
 * feat: implement `surch.create`
