@@ -1,5 +1,9 @@
 # Change log
 
+## 0.1.0
+
+* feat: implement `index.clear`
+
 ## 0.0.1
 
 * feat: add readme
