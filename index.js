@@ -59,6 +59,7 @@ module.exports = {
      * @property {Function} delete
      * @property {Function} update
      * @property {Function} search
+     * @property {Function} clear
      */
     return {
       /**
@@ -153,6 +154,14 @@ module.exports = {
 
             return rhs.score - lhs.score
           })
+      },
+
+      /**
+       * Delete all documents from the index.
+       */
+      clear () {
+        FULL_STRINGS.clear()
+        N_GRAMS.clear()
       }
     }
 

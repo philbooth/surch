@@ -14,10 +14,11 @@ in Node.js.
 * [How do I use it?](#how-do-i-use-it)
   * [Loading the library](#loading-the-library)
   * [Creating an index](#creating-an-index)
-  * [Adding documents to the index](#adding-documents-to-the-index)
+  * [Adding documents to an index](#adding-documents-to-an-index)
   * [Searching for matching documents](#searching-for-matching-documents)
-  * [Deleting documents from the index](#deleting-documents-from-the-index)
-  * [Updating documents in the index](#updating-documents-in-the-index)
+  * [Deleting documents from an index](#deleting-documents-from-an-index)
+  * [Updating documents in an index](#updating-documents-in-an-index)
+  * [Clearing an index](#clearing-an-index)
 * [What should I be careful about?](#what-should-i-be-careful-about)
 * [Is there a change log?](#is-there-a-change-log)
 * [How do I set up the dev environment?](#how-do-i-set-up-the-dev-environment)
@@ -121,7 +122,7 @@ const index2 = surch.create('bar', {
 });
 ```
 
-### Adding documents to the index
+### Adding documents to an index
 
 Call `add(document)`,
 where `document` is the object
@@ -188,7 +189,7 @@ the match with the lowest index
 (i.e. closest to the start of the string)
 comes first.
 
-### Deleting documents from the index
+### Deleting documents from an index
 
 Call `delete(id)`,
 where `id` identifies the document
@@ -198,7 +199,7 @@ that you wish to delete:
 index.delete('ffox2');
 ```
 
-### Updating documents in the index
+### Updating documents in an index
 
 Call `update(document)`,
 where `document` is the updated object:
@@ -208,6 +209,16 @@ index.update({
   _id: 'ffox1',
   foo: 'Their names were Farmer Boggis, Farmer Bunce and Farmer Bean.'
 });
+```
+
+## Clearing an index
+
+Call `clear()`
+to delete all documents
+from an index:
+
+```js
+index.clear();
 ```
 
 ## What should I be careful about?
