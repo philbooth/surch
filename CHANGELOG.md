@@ -1,5 +1,9 @@
 # Change log
 
+## 0.1.1
+
+* fix: sanely handle unicode documents and queries
+
 ## 0.1.0
 
 * feat: implement `index.clear`
