@@ -72,7 +72,7 @@ module.exports = {
         const value = document[targetKey]
         const documentId = document[idKey]
 
-        if (! value || value.length < minLength) {
+        if (! value) {
           return
         }
 
@@ -80,9 +80,15 @@ module.exports = {
         assert.assigned(documentId, 'Invalid document id.')
         assert.equal(FULL_STRINGS.has(documentId), false, 'Duplicate document id.')
 
+        const characters = Array.from(value.normalize('NFKC'))
+
+        if (characters.length < minLength) {
+          return
+        }
+
         FULL_STRINGS.set(documentId, value)
 
-        split(value).forEach(item => {
+        split(characters).forEach(item => {
           const substring = item.substring
           const ngram = N_GRAMS.get(substring)
           const index = {
@@ -143,10 +149,13 @@ module.exports = {
        */
       search (query) {
         assert.string(query, 'Invalid argument, "query".')
-        assert(query.length >= minLength, 'Invalid argument length, "query".')
 
-        return filter(split(query))
-          .reduce(dedupe.bind(new Map(), query), [])
+        const characters = Array.from(query.normalize('NFKC'))
+
+        assert(characters.length >= minLength, 'Invalid argument length, "query".')
+
+        return filter(split(characters))
+          .reduce(dedupe.bind(new Map(), characters), [])
           .sort((lhs, rhs) => {
             if (lhs.score === rhs.score) {
               return lhs.indices[0] - rhs.indices[0]
@@ -165,31 +174,31 @@ module.exports = {
       }
     }
 
-    function split (string, index = 0, skipCount = 0, substrings = []) {
-      const stringLength = string.length
+    function split (characters, index = 0, skipCount = 0, substrings = []) {
+      const stringLength = characters.length
 
       if (index + skipCount > stringLength - minLength) {
         return substrings
       }
 
       const position = index + skipCount
-      let character = normalise(string[position])
+      let character = normalise(characters[position])
 
       if (INSIGNIFICANT_CHARACTERS.has(character)) {
-        return split(string, index, skipCount + 1, substrings)
+        return split(characters, index, skipCount + 1, substrings)
       }
 
       substrings[index] = {
         substring: character,
         index,
         position,
-        tokenStart: ! strict && WHITESPACE.has(string[position - 1])
+        tokenStart: ! strict && WHITESPACE.has(characters[position - 1])
       }
 
       let j = 1, substringSkipCount = 0
       while (j < minLength) {
         if (position + j + substringSkipCount < stringLength) {
-          character = normalise(string[position + j + substringSkipCount])
+          character = normalise(characters[position + j + substringSkipCount])
 
           if (strict || ! WHITESPACE.has(character)) {
             if (INSIGNIFICANT_CHARACTERS.has(character)) {
@@ -204,10 +213,10 @@ module.exports = {
         }
 
         substrings.pop()
-        return split(string, index, skipCount + 1, substrings)
+        return split(characters, index, skipCount + 1, substrings)
       }
 
-      return split(string, index + 1, skipCount, substrings)
+      return split(characters, index + 1, skipCount, substrings)
     }
 
     function normalise (string) {
@@ -251,11 +260,11 @@ module.exports = {
       return results.concat(candidates)
     }
 
-    function dedupe (query, deduped, result) {
+    function dedupe (characters, deduped, result) {
       const ids = this
       const { documentId, position } = result
       const match = FULL_STRINGS.get(documentId)
-      const score = Math.round(query.length / match.length * 100)
+      const score = Math.round(characters.length / Array.from(match.normalize('NFKC')).length * 100)
 
       if (ids.has(documentId)) {
         const canonicalResult = deduped[ids.get(documentId)]

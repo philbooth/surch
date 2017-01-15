@@ -19,6 +19,8 @@ in Node.js.
   * [Deleting documents from an index](#deleting-documents-from-an-index)
   * [Updating documents in an index](#updating-documents-in-an-index)
   * [Clearing an index](#clearing-an-index)
+* [How is punctuation handled?](#how-is-punctuation-handled)
+* [Does it understand unicode?](#does-it-understand-unicode)
 * [What should I be careful about?](#what-should-i-be-careful-about)
 * [Is there a change log?](#is-there-a-change-log)
 * [How do I set up the dev environment?](#how-do-i-set-up-the-dev-environment)
@@ -211,7 +213,7 @@ index.update({
 });
 ```
 
-## Clearing an index
+### Clearing an index
 
 Call `clear()`
 to delete all documents
@@ -220,6 +222,25 @@ from an index:
 ```js
 index.clear();
 ```
+
+## How is punctuation handled?
+
+Punctuation is ignored.
+For instance,
+a document containing the string
+`'King\'s Cross'`
+will be matched
+by both of the queries
+`'King\'s Cross'` and `'Kings Cross'`.
+
+## Does it understand unicode?
+
+Yes.
+Documents are indexed
+in their NKFC-normalised form
+so lookalikes such as
+`'ma\xf1ana'` and `'man\u0303ana'`
+are matched identically.
 
 ## What should I be careful about?
 

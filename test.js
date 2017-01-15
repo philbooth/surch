@@ -484,3 +484,58 @@ suite('readme:', () => {
   )
 })
 
+suite('unicode high-order bytes:', () => {
+  let index
+
+  setup(() => {
+    index = surch.create('foo')
+    index.add({ _id: 'bar', foo: '💩💰💥 🔥😞😀' })
+    index.add({ _id: 'baz', foo: '💩💰💥 🔥😞🙀' })
+  })
+
+  test('search with 2 matches returns correct results', () =>
+    assert.deepEqual(index.search('💩💰💥'), [
+      { id: 'bar', match: '💩💰💥 🔥😞😀', indices: [ 0 ], score: 43 },
+      { id: 'baz', match: '💩💰💥 🔥😞🙀', indices: [ 0 ], score: 43 }
+    ])
+  )
+
+  test('search with 1 match returns correct result', () =>
+    assert.deepEqual(index.search('🔥😞😀'), [
+      { id: 'bar', match: '💩💰💥 🔥😞😀', indices: [ 4 ], score: 43 }
+    ])
+  )
+
+  test('search with no matches returns empty result', () =>
+    assert.deepEqual(index.search('🔥😞🚀'), [])
+  )
+
+  test('search throws with short query', () =>
+    assert.throws(() => index.search('🔥😞'))
+  )
+})
+
+suite('unicode lookalikes:', () => {
+  let index
+
+  setup(() => {
+    index = surch.create('foo')
+    index.add({ _id: 'bar', foo: 'ma\xf1ana' })
+    index.add({ _id: 'baz', foo: 'man\u0303ana' })
+  })
+
+  test('search with normalised query returns correct results', () =>
+    assert.deepEqual(index.search('ma\xf1ana'), [
+      { id: 'bar', match: 'ma\xf1ana', indices: [ 0 ], score: 100 },
+      { id: 'baz', match: 'man\u0303ana', indices: [ 0 ], score: 100 }
+    ])
+  )
+
+  test('search with unnormalised query returns correct results', () =>
+    assert.deepEqual(index.search('man\u0303ana'), [
+      { id: 'bar', match: 'ma\xf1ana', indices: [ 0 ], score: 100 },
+      { id: 'baz', match: 'man\u0303ana', indices: [ 0 ], score: 100 }
+    ])
+  )
+})
+
