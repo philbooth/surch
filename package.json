@@ -26,7 +26,7 @@
     "url": "https://github.com/philbooth/surch/issues"
   },
   "dependencies": {
-    "check-types": "^7.0.1"
+    "check-types": "^7.1.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
