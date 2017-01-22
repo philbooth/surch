@@ -21,6 +21,7 @@ in Node.js.
   * [Clearing an index](#clearing-an-index)
 * [How is punctuation handled?](#how-is-punctuation-handled)
 * [Does it understand unicode?](#does-it-understand-unicode)
+* [Does it handle object-based document ids?](#does-it-handle-object-based-document-ids)
 * [What should I be careful about?](#what-should-i-be-careful-about)
 * [Is there a change log?](#is-there-a-change-log)
 * [How do I set up the dev environment?](#how-do-i-set-up-the-dev-environment)
@@ -241,6 +242,52 @@ in their NKFC-normalised form
 so lookalikes such as
 `'ma\xf1ana'` and `'man\u0303ana'`
 are matched identically.
+
+## Does it handle object-based document ids?
+
+Yes.
+Object-based document ids
+work out-of-the-box,
+but you may want to coerce them
+to a different type
+using the `coerceId` option
+to `create`.
+
+Document ids are always compared
+using `===`,
+so require consistent object references
+to be passed to `add`, `update` and `delete`.
+The `coerceId` function
+is called on entry
+to each of these methods
+and can be used to ensure
+that object-based ids are handled sanely.
+
+For instance,
+to coerce MongoDB `ObjectId` references
+to strings,
+you could do the following:
+
+```js
+const index = surch.create('foo', {
+  coerceId: id => id.src
+});
+index.add({
+  _id: new ObjectId('58847582a08c71481a672cc3'),
+  foo: 'The quick brown fox jumps over the lazy dog.'
+});
+```
+
+Note that the `coerceId` option
+also affects the `id` property
+returned by `search`:
+
+```js
+index.search('fox');
+// Returns [
+//   { id: '58847582a08c71481a672cc3', ... }
+// ]
+```
 
 ## What should I be careful about?
 

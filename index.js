@@ -40,15 +40,28 @@ module.exports = {
    *   @param {Boolean} [options.strict]
    *   Indicates whether queries should be strictly matched. Default is false.
    *
+   *   @param {Function} [options.coerceId]
+   *   Coercion function for sane handling of object-based ids. Default is id => id.
+   *
    * @returns {Index}
    */
-  create (targetKey, { idKey = '_id', minLength = 3, caseSensitive = false, strict = false } = {}) {
+  create (
+    targetKey, {
+      idKey = '_id',
+      minLength = 3,
+      caseSensitive = false,
+      strict = false,
+      coerceId = id => id
+    } = {}
+  ) {
     assert.nonEmptyString(targetKey, 'Invalid argument, "targetKey".')
     assert.nonEmptyString(idKey, 'Invalid option, "idKey".')
     assert.integer(minLength, 'Invalid option, "minLength".')
     assert(minLength > 0, 'Invalid option, "minLength".')
     assert.boolean(caseSensitive, 'Invalid option, "caseSensitive".')
     assert.boolean(strict, 'Invalid option, "strict".')
+    assert.function(coerceId, 'Invalid option, "coerceId".')
+    assert.hasLength(coerceId, 1, 'Invalid option, "coerceId".')
 
     const FULL_STRINGS = new Map()
     const N_GRAMS = new Map()
@@ -70,7 +83,7 @@ module.exports = {
        */
       add (document) {
         const value = document[targetKey]
-        const documentId = document[idKey]
+        const documentId = coerceId(document[idKey])
 
         if (! value) {
           return
@@ -112,6 +125,8 @@ module.exports = {
        * Id of the document to be removed from the index.
        */
       delete (documentId) {
+        documentId = coerceId(documentId)
+
         assert.string(FULL_STRINGS.get(documentId), 'Invalid document id.')
 
         FULL_STRINGS.delete(documentId)

@@ -46,6 +46,14 @@ test('create throws with invalid strict', () =>
   assert.throws(() => surch.create('foo', { strict: 'true' }))
 )
 
+test('create throws with non-function coerceId', () =>
+  assert.throws(() => surch.create('foo', { coerceId: { length: 1 } }))
+)
+
+test('create throws with invalid coerceId', () =>
+  assert.throws(() => surch.create('foo', { coerceId () {} }))
+)
+
 suite('create with default arguments:', () => {
   let index
 
@@ -537,5 +545,41 @@ suite('unicode lookalikes:', () => {
       { id: 'baz', match: 'man\u0303ana', indices: [ 0 ], score: 100 }
     ])
   )
+})
+
+suite('id coercion:', () => {
+  let index
+
+  setup(() => {
+    index = surch.create('foo', { coerceId: id => id.str })
+    index.add({ _id: { str: 'bar' }, foo: 'qux' })
+    index.add({ _id: { str: 'baz' }, foo: 'qux' })
+  })
+
+  test('add throws with duplicate coerced id', () =>
+    assert.throws(() => index.add({ _id: { str: 'bar' }, foo: 'wibble' }))
+  )
+
+  test('update recognises coerced id', () => {
+    assert.deepEqual(index.search('qux'), [
+      { id: 'bar', match: 'qux', indices: [ 0 ], score: 100 },
+      { id: 'baz', match: 'qux', indices: [ 0 ], score: 100 }
+    ])
+    index.update({ _id: { str: 'bar' }, foo: 'wibble' })
+    assert.deepEqual(index.search('qux'), [
+      { id: 'baz', match: 'qux', indices: [ 0 ], score: 100 }
+    ])
+  })
+
+  test('delete recognises coerced id', () => {
+    assert.deepEqual(index.search('qux'), [
+      { id: 'bar', match: 'qux', indices: [ 0 ], score: 100 },
+      { id: 'baz', match: 'qux', indices: [ 0 ], score: 100 }
+    ])
+    index.delete({ str: 'baz' })
+    assert.deepEqual(index.search('qux'), [
+      { id: 'bar', match: 'qux', indices: [ 0 ], score: 100 }
+    ])
+  })
 })
 
