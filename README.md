@@ -118,10 +118,11 @@ to be configured:
 
 ```js
 const index2 = surch.create('bar', {
-  idKey,         // The identity key for documents. Defaults to '_id'.
-  minLength,     // The minimum queryable substring length. Defaults to 3.
-  caseSensitive, // Enables case-sensitive matching. Defaults to false.
-  strict         // Enables strict (non-fuzzy) matching. Defaults to false.
+  idKey,         // The identity key for documents. Defaults to `'_id'`.
+  minLength,     // The minimum queryable substring length. Defaults to `3`.
+  caseSensitive, // Enables case-sensitive matching. Defaults to `false`.
+  strict,        // Enables strict (non-fuzzy) matching. Defaults to `false`.
+  coerceId       // Coercion function for object-based ids. Defaults to `id => id`.
 });
 ```
 
@@ -270,7 +271,7 @@ you could do the following:
 
 ```js
 const index = surch.create('foo', {
-  coerceId: id => id.src
+  coerceId: id => id.valueOf()
 });
 index.add({
   _id: new ObjectId('58847582a08c71481a672cc3'),
