@@ -255,7 +255,14 @@ module.exports = {
           }
 
           if (subquery.tokenStart) {
-            return filter(subqueries, candidates[0].documentId, results.concat(candidates))
+            if (documentId) {
+              return filter(subqueries, documentId, results.concat(candidates))
+            }
+
+            const groupedCandidates = groupByDocumentId(candidates, matches)
+            return [ ...groupedCandidates ].reduce((res, [ id, documentCandidates ]) => {
+              return res.concat(filter(subqueries, id, results.concat(documentCandidates)))
+            }, [])
           }
 
           candidates = candidates.filter(candidate => {
@@ -273,6 +280,28 @@ module.exports = {
       }
 
       return results.concat(candidates)
+    }
+
+    function groupByDocumentId (candidates, matches) {
+      if (matches) {
+        matches = groupByDocumentId(matches)
+      }
+
+      return candidates.reduce((documentIds, candidate) => {
+        const documentId = candidate.documentId
+
+        if (! matches || matches.has(documentId)) {
+          const documentCandidates = documentIds.get(documentId)
+
+          if (documentCandidates) {
+            documentCandidates.push(candidate)
+          } else {
+            documentIds.set(documentId, [ candidate ])
+          }
+        }
+
+        return documentIds
+      }, new Map())
     }
 
     function dedupe (characters, deduped, result) {

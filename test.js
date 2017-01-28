@@ -386,7 +386,7 @@ suite('create with minLength=4:', () => {
   let index
 
   setup(() => {
-    index = surch.create('foo', { strict: true, minLength: 4 })
+    index = surch.create('foo', { minLength: 4 })
     index.add({ _id: 0, foo: 'The quick brown fox jumps over the lazy dog.' })
   })
 
@@ -579,6 +579,26 @@ suite('id coercion:', () => {
     index.delete({ str: 'baz' })
     assert.deepEqual(index.search('qux'), [
       { id: 'bar', match: 'qux', indices: [ 0 ], score: 100 }
+    ])
+  })
+})
+
+suite('https://github.com/philbooth/surch/issues/1:', () => {
+  let index
+
+  setup(() => {
+    index = surch.create('foo')
+    index.add({ _id: '01', foo: 'The Queen\'s Head' })
+    index.add({ _id: '02', foo: 'The Craft Beer Co.' })
+    index.add({ _id: '03', foo: 'The Three Johns' })
+  })
+
+  test('search returns correct results', () => {
+    assert.deepEqual(index.search('The Craft Beer Co.'), [
+      { id: '02', match: 'The Craft Beer Co.', indices: [ 0, 4, 10 ], score: 100 }
+    ])
+    assert.deepEqual(index.search('The Three Johns'), [
+      { id: '03', match: 'The Three Johns', indices: [ 0, 4, 10 ], score: 100 }
     ])
   })
 })
