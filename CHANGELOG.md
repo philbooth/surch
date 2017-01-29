@@ -1,5 +1,9 @@
 # Change log
 
+## 0.2.2
+
+* fix: use cloned subquery array in recursive calls to filter
+
 ## 0.2.1
 
 * fix: ensure correct documentId is propagated for fuzzy matches
