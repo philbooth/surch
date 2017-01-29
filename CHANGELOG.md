@@ -1,5 +1,9 @@
 # Change log
 
+## 0.2.1
+
+* fix: ensure correct documentId is propagated for fuzzy matches
+
 ## 0.2.0
 
 * feat: implement `coerceId` option
