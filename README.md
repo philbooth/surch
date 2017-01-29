@@ -63,8 +63,7 @@ This approach has two benefits:
   Each *n*-gram is a key
   into the inverted index,
   so there is no need
-  to iterate through
-  the characters in every string.
+  to iterate through every string.
 
 To satisfy
 the most common use-case (i.e. mine),
