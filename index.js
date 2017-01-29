@@ -256,12 +256,12 @@ module.exports = {
 
           if (subquery.tokenStart) {
             if (documentId) {
-              return filter(subqueries, documentId, results.concat(candidates))
+              return filter(subqueries.slice(), documentId, results.concat(candidates))
             }
 
             const groupedCandidates = groupByDocumentId(candidates, matches)
             return [ ...groupedCandidates ].reduce((res, [ id, documentCandidates ]) => {
-              return res.concat(filter(subqueries, id, results.concat(documentCandidates)))
+              return res.concat(filter(subqueries.slice(), id, results.concat(documentCandidates)))
             }, [])
           }
 
