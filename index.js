@@ -210,10 +210,10 @@ module.exports = {
         tokenStart: ! strict && WHITESPACE.has(characters[position - 1])
       }
 
-      let j = 1, substringSkipCount = 0
-      while (j < minLength) {
-        if (position + j + substringSkipCount < stringLength) {
-          character = normalise(characters[position + j + substringSkipCount])
+      let i = 1, substringSkipCount = 0
+      while (i < minLength) {
+        if (position + i + substringSkipCount < stringLength) {
+          character = normalise(characters[position + i + substringSkipCount])
 
           if (strict || ! WHITESPACE.has(character)) {
             if (INSIGNIFICANT_CHARACTERS.has(character)) {
@@ -222,7 +222,7 @@ module.exports = {
             }
 
             substrings[index].substring += character
-            ++j
+            ++i
             continue
           }
         }
