@@ -270,7 +270,7 @@ you could do the following:
 
 ```js
 const index = surch.create('foo', {
-  coerceId: id => id.valueOf()
+  coerceId: id => id.toString()
 });
 index.add({
   _id: new ObjectId('58847582a08c71481a672cc3'),
