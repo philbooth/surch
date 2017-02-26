@@ -1,5 +1,12 @@
 # Change log
 
+## 0.2.3
+
+* fix: update the readme (55fc4cd)
+* fix: update the example code (cfeb182)
+* refactor: rename loop index variable (a7b44a1)
+* fix: ensure final-token mismatches fail the query (905cb55)
+
 ## 0.2.2
 
 * fix: use cloned subquery array in recursive calls to filter
