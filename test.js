@@ -620,3 +620,26 @@ suite('https://github.com/philbooth/surch/issues/2:', () => {
   )
 })
 
+suite('https://github.com/philbooth/surch/issues/3:', () => {
+  let index
+
+  setup(() => {
+    index = surch.create('foo')
+    index.add({ _id: '01', foo: 'foo bara' })
+    index.add({ _id: '02', foo: 'foo barb' })
+  })
+
+  test('search returns correct results', () => {
+    assert.deepEqual(index.search('foo'), [
+      { id: '01', match: 'foo bara', indices: [ 0 ], score: 38 },
+      { id: '02', match: 'foo barb', indices: [ 0 ], score: 38 }
+    ])
+    assert.deepEqual(index.search('foo bara'), [
+      { id: '01', match: 'foo bara', indices: [ 0, 4 ], score: 100 }
+    ])
+    assert.deepEqual(index.search('foo barb'), [
+      { id: '02', match: 'foo barb', indices: [ 0, 4 ], score: 100 }
+    ])
+  })
+})
+

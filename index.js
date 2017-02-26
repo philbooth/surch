@@ -260,6 +260,7 @@ module.exports = {
             }
 
             const groupedCandidates = groupByDocumentId(candidates, matches)
+            // eslint-disable-next-line no-loop-func
             return [ ...groupedCandidates ].reduce((res, [ id, documentCandidates ]) => {
               return res.concat(filter(subqueries.slice(), id, results.concat(documentCandidates)))
             }, [])
@@ -270,6 +271,9 @@ module.exports = {
               return match.documentId === candidate.documentId && match.index === candidate.index + i
             })
           })
+          if (candidates.length === 0) {
+            results = []
+          }
         } else if (documentId) {
           candidates = matches.filter(match => match.documentId === documentId)
         } else {
